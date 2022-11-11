@@ -91,6 +91,67 @@ def O_move(board):
     print("ERROR! No Valid Move!")
 
 
+def calculateScore(b, depth):
+    score = 0
+    r_count = 0
+    for row in range(len(b)):
+        if b[row][0] == b[row][1] and b[row][1] == b[row][2]:
+            return 10 - depth
+
+        
+    for col in range(len(b)):
+        if b[0][col] == b[1][col] and b[1][col] == b[2][col]:
+            return 10 - depth
+
+    #Check diagonal from left to right
+    if b[0][0] == b[1][1] and b[1][1] == b[2][2]:
+        return 10 - depth
+    #Check dia
+    if b[0][2] == b[1][1] and b[1][1] == b[2][0]: 
+        return 10 - depth
+    
+
+
+    
+    
+
+
+
+def minmax(board, depth, isMax):
+    score = calculateScore(board, depth)
+    # Winner
+    if score == 10: 
+        return score
+    # Tie
+    if score == 0:
+        return score
+    # Negative score
+    if score > 0:
+        return score
+
+    if isMax:
+        best = -1000
+        for row in range(len(board)):
+            for col in range(len(board[row ])):
+                if board[row][col] == EMPTY:
+                    best = max( best, minmax(board, depth + 1, not isMax) )
+                    board[row][col] = EMPTY
+        return best
+    else:
+        best = 1000
+        for row in range(len(board)):
+            for col in range(len(board)):
+                if board[row][col] == EMPTY:
+                    best = min( best, minmax(board, depth + 1, not isMax) )
+                    board[row][col] = EMPTY
+        
+        return best
+
+
+
+    
+
+
 def X_move(board):
     # TODO: Implement the Minimax Algorithm
     #      Given an input game state, find the best move for X with the minimax algorithm
@@ -121,11 +182,17 @@ def X_move(board):
     #      O | O | X     Depth = 5                      However, in the input state I used, its actually impossible for O to win, as far as I can tell...
     #
 
+    defaultValue = - 100
     # START FILLER CODE, just picks first valid move!
     for row in range(len(board)):
         for col in range(len(board[row])):
             if board[row][col] == EMPTY:
-                return (row, col)
+                move = minmax(board, 0, False) # Assume is not max since O will make the next move
+                if move > defaultValue:
+                    defaultValue = move
+                    return (row, col)
+
+
     print("ERROR! No Valid Move!")
     # END FILLER CODE
 
