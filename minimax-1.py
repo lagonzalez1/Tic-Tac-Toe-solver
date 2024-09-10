@@ -1,3 +1,7 @@
+import random
+import sys
+
+
 GAME_INCOMPLETE = 0
 GAME_DRAW = 1
 GAME_X = 2
@@ -69,26 +73,21 @@ def print_board(board):
 
 
 def O_move(board):
-    """
-    This function plays the O player (The opponent).
+    best_value = 1000
+    best_move = (-1, -1)
 
-    Presently I have made O simply return the first valid move I find
-    If you like, you can make this function match your X function
-    to watch two minimax agents duke it out
-    But really, this can be defined to anything you want it to do for testing.
-    I will only be testing "X_move"
-
-    Arguments:
-    - board: the state of the current board
-
-    Return:
-    - a tuple (i,j) with the row, col of O's chosen move
-    """
-    for row in range(len(board)):
-        for col in range(len(board[row])):
+    for row in range(3):
+        for col in range(3):
             if board[row][col] == EMPTY:
-                return (row, col)
-    print("ERROR! No Valid Move!")
+                board[row][col] = O  # Make a move for O
+                move_value = minmax(board, 0, True)  # Evaluate this move for O
+                board[row][col] = EMPTY  # Undo move
+                if move_value < best_value:
+                    best_value = move_value
+                    best_move = (row, col)
+
+    return best_move
+
 
 
 def calculateScore(b, depth):
@@ -98,7 +97,6 @@ def calculateScore(b, depth):
         if b[row][0] == b[row][1] and b[row][1] == b[row][2]:
             return 10 - depth
 
-        
     for col in range(len(b)):
         if b[0][col] == b[1][col] and b[1][col] == b[2][col]:
             return 10 - depth
@@ -109,43 +107,42 @@ def calculateScore(b, depth):
     #Check dia
     if b[0][2] == b[1][1] and b[1][1] == b[2][0]: 
         return 10 - depth
+
+    return 0
     
 
 
     
-    
-
-
-
 def minmax(board, depth, isMax):
-    score = calculateScore(board, depth)
-    # Winner
-    if score == 10: 
-        return score
-    # Tie
-    if score == 0:
-        return score
-    # Negative score
-    if score > 0:
-        return score
+    score = evaluate_game(board)
 
-    if isMax:
+    # Check if game is already over
+    if score == GAME_X:  # X wins
+        return 10 - depth
+    elif score == GAME_O:  # O wins
+        return -10 + depth
+    elif score == GAME_DRAW:  # Tie
+        return 0
+
+    if isMax:  # Maximizing player (X)
         best = -1000
-        for row in range(len(board)):
-            for col in range(len(board[row ])):
+        for row in range(3):
+            for col in range(3):
                 if board[row][col] == EMPTY:
-                    best = max( best, minmax(board, depth + 1, not isMax) )
-                    board[row][col] = EMPTY
+                    board[row][col] = X  # Make a move for X
+                    best = max(best, minmax(board, depth + 1, False))  # Recurse with O's turn
+                    board[row][col] = EMPTY  # Undo move
         return best
-    else:
+    else:  # Minimizing player (O)
         best = 1000
-        for row in range(len(board)):
-            for col in range(len(board)):
+        for row in range(3):
+            for col in range(3):
                 if board[row][col] == EMPTY:
-                    best = min( best, minmax(board, depth + 1, not isMax) )
-                    board[row][col] = EMPTY
-        
+                    board[row][col] = O  # Make a move for O
+                    best = min(best, minmax(board, depth + 1, True))  # Recurse with X's turn
+                    board[row][col] = EMPTY  # Undo move
         return best
+
 
 
 
@@ -153,48 +150,22 @@ def minmax(board, depth, isMax):
 
 
 def X_move(board):
-    # TODO: Implement the Minimax Algorithm
-    #      Given an input game state, find the best move for X with the minimax algorithm
-    #      For scores, you can use +10 for an X win, -10 for a O win, and 0 for a Draw
-    #      In addition, in order to motivate the agent to win or lose as soon as possible, 
-    #      subtract the depth of completed game state from the score. For Example:
-    #
-    #      If the input state is: X |   | X
-    #                               |   | O
-    #                               | O | 
-    #
-    #      Some potential completed game states might have the scores:
-    #
-    #      X | O | X     X Win = 10
-    #        | X | O  ->             -> Score = 7
-    #        | O | X     Depth = 3
-    #
-    #      X | X | X     X Win = 10
-    #        |   | O  ->             -> Score = 9
-    #        | O |       Depth = 1
-    #
-    #      X | O | X     Draw  = 0
-    #      O | X | O  ->             -> Score = -5
-    #      O | O | X     Depth = 5
-    #
-    #      X | O | X     O Win = -10
-    #      X | O | O  ->             -> Score = -15  -> This state is actually not possible, because X always goes first
-    #      O | O | X     Depth = 5                      However, in the input state I used, its actually impossible for O to win, as far as I can tell...
-    #
+    best_value = -1000
+    best_move = (-1, -1)
 
-    defaultValue = - 100
-    # START FILLER CODE, just picks first valid move!
-    for row in range(len(board)):
-        for col in range(len(board[row])):
+    # Loop over all available cells and evaluate the best move
+    for row in range(3):
+        for col in range(3):
             if board[row][col] == EMPTY:
-                move = minmax(board, 0, False) # Assume is not max since O will make the next move
-                if move > defaultValue:
-                    defaultValue = move
-                    return (row, col)
+                board[row][col] = X  # Make a move for X
+                move_value = minmax(board, 0, False)  # Evaluate this move
+                board[row][col] = EMPTY  # Undo move
+                if move_value > best_value:
+                    best_value = move_value
+                    best_move = (row, col)
 
+    return best_move
 
-    print("ERROR! No Valid Move!")
-    # END FILLER CODE
 
 
 board = [[EMPTY, EMPTY, EMPTY],
@@ -202,16 +173,54 @@ board = [[EMPTY, EMPTY, EMPTY],
          [EMPTY, EMPTY, EMPTY]]
 
 game_winner = GAME_INCOMPLETE
-# Game Loop
+
+print("----------------------------")
+def print_move_grid():
+    for row in range(3):
+        line = ""
+        for col in range(3):
+            line += f"({row},{col})"
+            if col < 2:
+                line += " | "  # Add a separator between columns
+        print(line)
+        if row < 2:
+            print("---------")  # Add a separator between rows
+
+# Call the function to print the grid
+print_move_grid()
+print("----------------------------")
+
+
+
+
+
 while game_winner == GAME_INCOMPLETE:
-    i, j = X_move(board)
-    board[i][j] = X
+    # X's move (human input)
+    while True:
+        try:
+            r = input("Player 1 make move for row 0-2: ")
+            c = input("Player 1 make move for col 0-2: ")
+            row = int(r)
+            col = int(c)
+
+            # Check if the move is within bounds and on an empty spot
+            if row in range(3) and col in range(3) and board[row][col] == EMPTY:
+                board[row][col] = X
+                break
+            else:
+                print("Invalid move, try again.")
+        except ValueError:
+            print("Please enter valid numbers between 0 and 2.")
+
     print_board(board)
     game_winner = evaluate_game(board)
     if game_winner != GAME_INCOMPLETE:
         break
+
+    # O's move (AI)
     i, j = O_move(board)
     board[i][j] = O
+    print("O's move:")
     print_board(board)
     game_winner = evaluate_game(board)
 
@@ -219,6 +228,8 @@ while game_winner == GAME_INCOMPLETE:
 if game_winner == GAME_DRAW:
     print("Game was a Draw!")
 elif game_winner == GAME_X:
-    print("X Wins!")
+    print("You Win!")
 else:
     print("O Wins!")
+
+
